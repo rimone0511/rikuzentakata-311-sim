@@ -1,11 +1,13 @@
 import * as THREE from 'three';
-import { Terrain, createSea } from './terrain.js';
+import { Terrain } from './terrain.js';
 import { Town } from './buildings.js';
 import { Player } from './player.js';
+import { Tsunami, EVENTS } from './tsunami.js';
 
 const container = document.getElementById('app');
 const loadingEl = document.getElementById('loading');
 const statusEl = document.getElementById('status');
+const clockEl = document.getElementById('clock');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -28,18 +30,43 @@ scene.add(sun);
 loadingEl.textContent = '地形データ読込中…';
 const terrain = await Terrain.load();
 scene.add(terrain.mesh);
-scene.add(createSea(terrain.worldW));
 
 loadingEl.textContent = '街並みを生成中…';
 const town = await Town.build(terrain);
 scene.add(town.group);
 console.log(`建物 ${town.count} 棟を生成`);
+
+loadingEl.textContent = '津波データを準備中…';
+const tsunami = new Tsunami(terrain);
+scene.add(tsunami.mesh);
 loadingEl.textContent = '';
 
 const player = new Player(camera, terrain, town, renderer.domElement);
 scene.add(player.avatar);
-// 初期スタート地点: 旧駅前(市街地の中心部)から北向き
+// 初期スタート地点: 旧駅前(市街地の中心部)
 player.spawnAtLatLon(39.0155, 141.6250, 180);
+
+// ---- シミュレーション時刻(14:46:00 = 地震発生 = t0) ----
+const QUAKE_DURATION = 180; // 強い揺れの継続時間(約3分)
+let simTime = 0;            // 地震からの経過秒
+let timeScale = 1;
+let running = false;
+let caught = false;         // 波に追いつかれたか
+
+document.querySelectorAll('#timescale button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    timeScale = Number(btn.dataset.scale);
+    document.querySelectorAll('#timescale button').forEach((b) =>
+      b.classList.toggle('active', b === btn));
+  });
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('notice').style.display = 'none';
+  player.enabled = true;
+  running = true;
+  renderer.domElement.requestPointerLock();
+});
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -47,24 +74,85 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  document.getElementById('notice').style.display = 'none';
-  player.enabled = true;
-  renderer.domElement.requestPointerLock();
-});
+function formatClock(t) {
+  const total = 14 * 3600 + 46 * 60 + Math.floor(t);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function currentEvent(t) {
+  let ev = '';
+  for (const [time, text] of EVENTS) {
+    if (t >= time) ev = text;
+    else break;
+  }
+  return ev;
+}
+
+// 波に追いつかれたとき: 静かに白転し、事実のみ表示(PLAN.md 設計思想)
+function whiteout(depth) {
+  caught = true;
+  running = false;
+  player.enabled = false;
+  document.exitPointerLock();
+  const facts = document.getElementById('facts');
+  facts.innerHTML =
+    `${formatClock(simTime).slice(0, 5)}、この場所に津波が到達しました。<br>` +
+    `ここの標高は ${player.pos.y.toFixed(1)}m。浸水の深さは、やがて建物の屋根を越えました。<br><br>` +
+    `2011年3月11日、陸前高田市では 1,700人以上が犠牲になりました。<br>` +
+    `指定避難場所だった市民会館・市民体育館にも津波が達し、<br>多くの方が亡くなりました。<br><br>` +
+    `高台までの数分の差が、生死を分けました。<br><br>` +
+    `<button onclick="location.reload()" style="pointer-events:auto;cursor:pointer;` +
+    `background:#eee;border:1px solid #999;color:#333;padding:8px 24px;font-size:13px;">` +
+    `もう一度、別の行動を試す</button>`;
+  document.getElementById('whiteout').classList.add('shown');
+}
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
   const dt = clock.getDelta();
-  if (player.enabled) player.update(dt);
 
+  if (running) {
+    simTime += dt * timeScale;
+    tsunami.update(simTime);
+
+    if (player.enabled) {
+      // 浸水による減速(膝下でも歩行は大きく阻害される)
+      const depth = tsunami.depthAt(player.pos.x, player.pos.z, simTime);
+      player.speedFactor = depth > 0.05 ? Math.max(0.25, 1 - depth * 1.5) : 1;
+      player.update(dt);
+
+      if (!caught && depth > 0.3) whiteout(depth);
+
+      // 地震の揺れ(体感の再現。転倒などはフェーズ2)
+      if (simTime < QUAKE_DURATION) {
+        const amp = 0.25 * (1 - simTime / QUAKE_DURATION);
+        camera.position.x += (Math.random() - 0.5) * amp;
+        camera.position.y += (Math.random() - 0.5) * amp * 0.6;
+        camera.position.z += (Math.random() - 0.5) * amp;
+      }
+    }
+  }
+
+  clockEl.textContent = formatClock(simTime);
   const kmh = (player.speed * 3.6).toFixed(1);
   statusEl.innerHTML =
     `標高 ${player.pos.y.toFixed(1)} m / ${kmh} km/h` +
-    (player.thirdPerson ? ' / 三人称' : '');
+    (player.thirdPerson ? ' / 三人称' : '') + '<br>' +
+    `<span style="color:#ffd9a0">${currentEvent(simTime)}</span>`;
 
   renderer.render(scene, camera);
 });
 
 // 開発用(動作確認のためコンソールから操作できるように)
-window.__sim = { camera, terrain, town, player, scene };
+window.__sim = {
+  camera, terrain, town, player, scene, tsunami,
+  get simTime() { return simTime; },
+  set simTime(v) { simTime = v; },
+  get timeScale() { return timeScale; },
+  set timeScale(v) { timeScale = v; },
+  get running() { return running; },
+  set running(v) { running = v; },
+};

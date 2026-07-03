@@ -21,7 +21,8 @@ export class Player {
     this.thirdPerson = false;
     this.enabled = false;
     this.keys = new Set();
-    this.speed = 0;    // HUD用(m/s)
+    this.speed = 0;        // HUD用(m/s)
+    this.speedFactor = 1;  // 外部要因(浸水など)による減速
 
     this.avatar = this.#makeAvatar();
     this.avatar.visible = false;
@@ -56,7 +57,7 @@ export class Player {
     this.speed = 0;
     if (f.lengthSq() > 0) {
       f.normalize();
-      let spd = this.isRunning ? RUN_SPEED : WALK_SPEED;
+      let spd = (this.isRunning ? RUN_SPEED : WALK_SPEED) * this.speedFactor;
       // 傾斜による減速(上りは急なほど遅い)
       const ahead = this.#groundSlopeAhead(f);
       if (ahead > 0.15) spd *= Math.max(0.35, 1 - ahead * 1.2);
