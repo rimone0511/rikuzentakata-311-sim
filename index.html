@@ -37,6 +37,18 @@
     padding: 24px; text-align: center;
   }
   #whiteout.shown .facts { opacity: 1; }
+  #ending {
+    position: fixed; inset: 0; background: rgba(24, 26, 32, 0.94); opacity: 0;
+    transition: opacity 8s ease; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ending.shown { opacity: 1; pointer-events: auto; }
+  #ending .facts {
+    max-width: 560px; color: #d8d8d2; font-family: "Yu Gothic", serif;
+    font-size: 15px; line-height: 2.2; opacity: 0; transition: opacity 3s ease 6s;
+    padding: 24px; text-align: center;
+  }
+  #ending.shown .facts { opacity: 1; }
   #notice {
     position: fixed; inset: 0; background: rgba(10,10,12,.96); color: #ddd;
     display: flex; align-items: center; justify-content: center; z-index: 10;
@@ -94,6 +106,10 @@
   <div class="facts" id="facts"></div>
 </div>
 
+<div id="ending">
+  <div class="facts" id="endingFacts"></div>
+</div>
+
 <div id="notice">
   <div class="box">
     <h1>陸前高田 3.11 津波避難シミュレーション(開発版)</h1>
@@ -103,8 +119,13 @@
       実在の犠牲者・生存者個人を再現するものではなく、
       公開された調査資料に基づく近似的な再現です。
     </p>
+    <p>
+      このシミュレーションは、犠牲になられた方々への追悼の気持ちとともに、
+      「あの日、どう動けば助かったのか」を次の世代に伝えるために制作されています。
+    </p>
     <p style="color:#999; font-size:12px;">
-      地形:国土地理院 標高タイル / 地図データ:© OpenStreetMap contributors(ODbL)
+      地形:国土地理院 標高タイル / 地図データ:© OpenStreetMap contributors(ODbL)<br>
+      音量にご注意ください(M キーで消音できます)
     </p>
     <p style="margin-bottom:4px;">開始地点を選んでください:</p>
     <div id="startPoints"></div>

@@ -69,6 +69,13 @@ export class Tsunami {
     return this.waterLevelAt(x, z, t) - this.terrain.heightAt(x, z);
   }
 
+  // その地点で最終的に到達する最大浸水深 [m](結果表示用)
+  maxDepthAt(x, z) {
+    let maxLevel = -Infinity;
+    for (const [, v] of TIMELINE) maxLevel = Math.max(maxLevel, v);
+    return maxLevel - this.terrain.heightAt(x, z);
+  }
+
   // 毎フレーム: 水面メッシュを現在時刻に合わせて変形
   update(t) {
     this.coastLevel = this.levelAtCoast(t);

@@ -127,15 +127,19 @@ function currentEvent(t) {
 }
 
 // 波に追いつかれたとき: 静かに白転し、事実のみ表示(PLAN.md 設計思想)
-function whiteout(depth) {
+function whiteout() {
   caught = true;
   running = false;
   player.enabled = false;
   document.exitPointerLock();
+  const maxDepth = tsunami.maxDepthAt(player.pos.x, player.pos.z);
+  const depthLine = maxDepth >= 2
+    ? `この場所の浸水は、最大で約 ${maxDepth.toFixed(0)}m に達しました。`
+    : `この場所も、腰の高さを超える浸水に襲われました。`;
   const facts = document.getElementById('facts');
   facts.innerHTML =
     `${formatClock(simTime).slice(0, 5)}、この場所に津波が到達しました。<br>` +
-    `ここの標高は ${player.pos.y.toFixed(1)}m。浸水の深さは、やがて建物の屋根を越えました。<br><br>` +
+    `ここの標高は ${player.pos.y.toFixed(1)}m。${depthLine}<br><br>` +
     `2011年3月11日、陸前高田市では 1,700人以上が犠牲になりました。<br>` +
     `指定避難場所だった市民会館・市民体育館にも津波が達し、<br>多くの方が亡くなりました。<br><br>` +
     `高台までの数分の差が、生死を分けました。<br><br>` +
@@ -143,6 +147,27 @@ function whiteout(depth) {
     `background:#eee;border:1px solid #999;color:#333;padding:8px 24px;font-size:13px;">` +
     `もう一度、別の行動を試す</button>`;
   document.getElementById('whiteout').classList.add('shown');
+}
+
+// 第三波が引いたあとまで生き延びたとき: 静かな結び(スコアも称賛もなし)
+let ended = false;
+function quietEnding() {
+  ended = true;
+  running = false;
+  player.enabled = false;
+  document.exitPointerLock();
+  const facts = document.getElementById('endingFacts');
+  facts.innerHTML =
+    `16:46。津波は、少しずつ引きはじめました。<br>` +
+    `あなたは高いところで、無事にこの時間を迎えました。<br><br>` +
+    `実際のこの日は、夕方から雪が降る寒い夜でした。<br>` +
+    `停電の中、余震と津波の恐れは朝まで続きました。<br><br>` +
+    `2011年3月11日、陸前高田市では 1,700人以上が犠牲になりました。<br>` +
+    `生死を分けたのは、「すぐに、高いところへ」でした。<br><br>` +
+    `<button onclick="location.reload()" style="pointer-events:auto;cursor:pointer;` +
+    `background:#444;border:1px solid #777;color:#ddd;padding:8px 24px;font-size:13px;">` +
+    `はじめから</button>`;
+  document.getElementById('ending').classList.add('shown');
 }
 
 const clock = new THREE.Clock();
@@ -173,7 +198,10 @@ renderer.setAnimationLoop(() => {
 
       // 白転は津波の浸水のみで発動(平常の川・海に入っただけでは起きない)
       const wl = tsunami.waterLevelAt(player.pos.x, player.pos.z, simTime);
-      if (!caught && depth > 0.3 && wl > 1.0) whiteout(depth);
+      if (!caught && depth > 0.3 && wl > 1.0) whiteout();
+
+      // 16:46(第三波の後)まで無事なら、静かに結ぶ
+      if (!caught && !ended && simTime >= 7200) quietEnding();
 
       // 地震の揺れ(体感の再現。転倒などはフェーズ2)
       if (simTime < QUAKE_DURATION) {
