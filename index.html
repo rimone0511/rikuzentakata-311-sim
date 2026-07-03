@@ -54,13 +54,21 @@
   #startPoints button.selected { background: #7a4030; border-color: #b06a50; }
   #loading { position: fixed; bottom: 12px; right: 12px; color: #888; font: 12px sans-serif; }
 </style>
-<script type="importmap">
-{
-  "imports": {
+<script>
+// 開発時のキャッシュ対策: 自作モジュールのURLに読み込みごとのバージョンを付ける。
+// importmap は module 読み込み前に存在する必要があるため document.write で生成する。
+(function () {
+  var v = Date.now();
+  var files = ['main', 'terrain', 'buildings', 'player', 'tsunami', 'audio', 'npc', 'landmarks3d'];
+  var imports = {
     "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
     "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  };
+  for (var i = 0; i < files.length; i++) {
+    imports['./src/' + files[i] + '.js'] = './src/' + files[i] + '.js?v=' + v;
   }
-}
+  document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
+})();
 </script>
 </head>
 <body>
@@ -79,7 +87,7 @@
 </div>
 
 <div id="controls">
-  クリックで操作開始 / WASD:移動 / Shift:走る / V:視点切替 / ESC:カーソル解放
+  クリックで操作開始 / WASD:移動 / Shift:走る / V:視点切替 / M:音 / ESC:カーソル解放
 </div>
 
 <div id="whiteout">
@@ -106,6 +114,6 @@
 
 <div id="loading"></div>
 
-<script type="module" src="./src/main.js"></script>
+<script type="module">import('./src/main.js');</script>
 </body>
 </html>

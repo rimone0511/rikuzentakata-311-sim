@@ -16,8 +16,9 @@ export class Terrain {
   }
 
   static async load(baseUrl = './assets') {
-    const meta = await (await fetch(`${baseUrl}/terrain_meta.json`)).json();
-    const buf = await (await fetch(`${baseUrl}/terrain.bin`)).arrayBuffer();
+    // cache: 'no-cache' = 毎回サーバーに更新確認(開発時の古いデータ対策)
+    const meta = await (await fetch(`${baseUrl}/terrain_meta.json`, { cache: 'no-cache' })).json();
+    const buf = await (await fetch(`${baseUrl}/terrain.bin`, { cache: 'no-cache' })).arrayBuffer();
     return new Terrain(meta, new Float32Array(buf));
   }
 

@@ -4,10 +4,7 @@
     {
       "name": "sim",
       "runtimeExecutable": "python",
-      "runtimeArgs": [
-        "-c",
-        "import os, sys, runpy; sys.argv = ['http.server', os.environ.get('PORT', '8000')]; runpy.run_module('http.server', run_name='__main__')"
-      ],
+      "runtimeArgs": ["tools/devserver.py"],
       "autoPort": true
     }
   ]
