@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Terrain, createSea } from './terrain.js';
+import { Town } from './buildings.js';
 
 const container = document.getElementById('app');
 const loadingEl = document.getElementById('loading');
@@ -30,7 +31,15 @@ loadingEl.textContent = '地形データ読込中…';
 const terrain = await Terrain.load();
 scene.add(terrain.mesh);
 scene.add(createSea(terrain.worldW));
+
+loadingEl.textContent = '街並みを生成中…';
+const town = await Town.build(terrain);
+scene.add(town.group);
+console.log(`建物 ${town.count} 棟を生成`);
 loadingEl.textContent = '';
+
+// 開発用(動作確認のためコンソールから操作できるように)
+window.__sim = { camera, controls, terrain, town };
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;

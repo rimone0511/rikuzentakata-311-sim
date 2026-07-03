@@ -1,0 +1,13 @@
+{
+  "note": "震災前に存在し現在のOSMに無い施設の概略位置。approx:true は公開地図資料での要検証(QUESTIONS.md 参照)",
+  "landmarks": [
+    { "name": "陸前高田市民会館(旧・指定避難場所)", "key": "shiminkaikan", "lat": 39.0175, "lon": 141.6297, "approx": true, "w": 40, "d": 25, "h": 12, "color": "0x8a7f96" },
+    { "name": "市民体育館(旧・指定避難場所)", "key": "taiikukan", "lat": 39.0093, "lon": 141.6247, "approx": true, "w": 45, "d": 30, "h": 14, "color": "0x7f8a96" },
+    { "name": "旧陸前高田市役所", "key": "kyushiyakusho", "lat": 39.0163, "lon": 141.6290, "approx": true, "w": 35, "d": 20, "h": 12, "color": "0x96908a" },
+    { "name": "旧JR陸前高田駅", "key": "eki", "lat": 39.0155, "lon": 141.6250, "approx": true, "w": 25, "d": 10, "h": 6, "color": "0x9a8b7a" },
+    { "name": "奇跡の一本松(高田松原)", "key": "ipponmatsu", "lat": 39.0034662, "lon": 141.6251257, "approx": false, "w": 3, "d": 3, "h": 27, "color": "0x6a5a3f" },
+    { "name": "道の駅高田松原(タピック45)", "key": "tapic45", "lat": 39.0082102, "lon": 141.6294905, "approx": false, "w": 30, "d": 18, "h": 12, "color": "0xa89a80" },
+    { "name": "気仙中学校", "key": "kesenchu", "lat": 39.0010, "lon": 141.6196, "approx": false, "w": 50, "d": 15, "h": 11, "color": "0x9aa0a8" },
+    { "name": "陸前高田ユースホステル", "key": "youth", "lat": 39.0031066, "lon": 141.6253491, "approx": false, "w": 25, "d": 12, "h": 8, "color": "0xa0a89a" }
+  ]
+}
