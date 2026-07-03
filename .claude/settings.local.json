@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(python --version)",
+      "PowerShell(py --version)",
+      "PowerShell(Test-Path \"$env:ProgramFiles\\\\nodejs\\\\node.exe\"; Test-Path \"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\\\\node.exe\"; Test-Path \"$env:APPDATA\\\\nvm\")",
+      "PowerShell(git init)",
+      "PowerShell(git branch -m main)"
+    ]
+  }
+}
