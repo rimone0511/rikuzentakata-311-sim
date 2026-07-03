@@ -3,6 +3,8 @@ import { Terrain } from './terrain.js';
 import { Town } from './buildings.js';
 import { Player } from './player.js';
 import { Tsunami, EVENTS } from './tsunami.js';
+import { SimAudio } from './audio.js';
+import { NPCManager } from './npc.js';
 
 const container = document.getElementById('app');
 const loadingEl = document.getElementById('loading');
@@ -39,6 +41,11 @@ console.log(`建物 ${town.count} 棟を生成`);
 loadingEl.textContent = '津波データを準備中…';
 const tsunami = new Tsunami(terrain);
 scene.add(tsunami.mesh);
+
+const npcs = new NPCManager(terrain, town, tsunami);
+scene.add(npcs.group);
+
+const audio = new SimAudio();
 loadingEl.textContent = '';
 
 const player = new Player(camera, terrain, town, renderer.domElement);
@@ -87,7 +94,13 @@ document.getElementById('startBtn').addEventListener('click', () => {
   player.spawnAtLatLon(sp.lat, sp.lon, sp.yaw);
   player.enabled = true;
   running = true;
+  audio.start();
   renderer.domElement.requestPointerLock();
+});
+
+// M でミュート切替
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyM') audio.setMuted(!audio.muted);
 });
 
 window.addEventListener('resize', () => {
@@ -139,6 +152,11 @@ renderer.setAnimationLoop(() => {
   if (running) {
     simTime += dt * timeScale;
     tsunami.update(simTime);
+    npcs.update(simTime, dt * timeScale);
+    audio.update(simTime, {
+      nearestDepth: tsunami.depthAt(player.pos.x, player.pos.z, simTime),
+      coastLevel: tsunami.coastLevel,
+    });
 
     if (player.enabled) {
       // 浸水による減速(膝下でも歩行は大きく阻害される)
@@ -179,7 +197,7 @@ renderer.setAnimationLoop(() => {
 
 // 開発用(動作確認のためコンソールから操作できるように)
 window.__sim = {
-  camera, terrain, town, player, scene, tsunami, renderer,
+  camera, terrain, town, player, scene, tsunami, renderer, npcs, audio,
   get simTime() { return simTime; },
   set simTime(v) { simTime = v; },
   get timeScale() { return timeScale; },
