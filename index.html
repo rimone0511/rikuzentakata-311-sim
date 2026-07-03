@@ -48,6 +48,10 @@
     margin-top: 20px; padding: 10px 28px; font-size: 14px; cursor: pointer;
     background: #333; color: #eee; border: 1px solid #777;
   }
+  #startPoints button {
+    margin: 4px 6px 4px 0; padding: 6px 14px; font-size: 13px;
+  }
+  #startPoints button.selected { background: #7a4030; border-color: #b06a50; }
   #loading { position: fixed; bottom: 12px; right: 12px; color: #888; font: 12px sans-serif; }
 </style>
 <script type="importmap">
@@ -94,6 +98,8 @@
     <p style="color:#999; font-size:12px;">
       地形:国土地理院 標高タイル / 地図データ:© OpenStreetMap contributors(ODbL)
     </p>
+    <p style="margin-bottom:4px;">開始地点を選んでください:</p>
+    <div id="startPoints"></div>
     <button id="startBtn">開始する</button>
   </div>
 </div>

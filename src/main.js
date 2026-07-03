@@ -43,8 +43,28 @@ loadingEl.textContent = '';
 
 const player = new Player(camera, terrain, town, renderer.domElement);
 scene.add(player.avatar);
-// 初期スタート地点: 旧駅前(市街地の中心部)
-player.spawnAtLatLon(39.0155, 141.6250, 180);
+
+// スタート地点(避難行動の差を体験できるよう浸水域の数カ所)
+const START_POINTS = [
+  { name: '旧駅前(市街地)', lat: 39.0155, lon: 141.6250, yaw: 180 },
+  { name: '市民会館前', lat: 39.0175, lon: 141.6297, yaw: 180 },
+  { name: '高田松原(海岸)', lat: 39.0035, lon: 141.6252, yaw: 0 },
+  { name: '気仙町今泉', lat: 39.0060, lon: 141.6150, yaw: 90 },
+];
+let startIndex = 0;
+const spDiv = document.getElementById('startPoints');
+START_POINTS.forEach((sp, i) => {
+  const b = document.createElement('button');
+  b.textContent = sp.name;
+  b.classList.toggle('selected', i === startIndex);
+  b.addEventListener('click', () => {
+    startIndex = i;
+    spDiv.querySelectorAll('button').forEach((x, j) =>
+      x.classList.toggle('selected', j === i));
+  });
+  spDiv.appendChild(b);
+});
+player.spawnAtLatLon(START_POINTS[0].lat, START_POINTS[0].lon, START_POINTS[0].yaw);
 
 // ---- シミュレーション時刻(14:46:00 = 地震発生 = t0) ----
 const QUAKE_DURATION = 180; // 強い揺れの継続時間(約3分)
@@ -63,6 +83,8 @@ document.querySelectorAll('#timescale button').forEach((btn) => {
 
 document.getElementById('startBtn').addEventListener('click', () => {
   document.getElementById('notice').style.display = 'none';
+  const sp = START_POINTS[startIndex];
+  player.spawnAtLatLon(sp.lat, sp.lon, sp.yaw);
   player.enabled = true;
   running = true;
   renderer.domElement.requestPointerLock();
@@ -122,9 +144,18 @@ renderer.setAnimationLoop(() => {
       // 浸水による減速(膝下でも歩行は大きく阻害される)
       const depth = tsunami.depthAt(player.pos.x, player.pos.z, simTime);
       player.speedFactor = depth > 0.05 ? Math.max(0.25, 1 - depth * 1.5) : 1;
-      player.update(dt);
 
-      if (!caught && depth > 0.3) whiteout(depth);
+      // 倍速時も「シミュレーション内の移動速度」が一定になるよう、
+      // 加速した時間ぶんを小刻みに分割して更新する
+      let step = dt * timeScale;
+      while (step > 0) {
+        player.update(Math.min(step, 0.05));
+        step -= 0.05;
+      }
+
+      // 白転は津波の浸水のみで発動(平常の川・海に入っただけでは起きない)
+      const wl = tsunami.waterLevelAt(player.pos.x, player.pos.z, simTime);
+      if (!caught && depth > 0.3 && wl > 1.0) whiteout(depth);
 
       // 地震の揺れ(体感の再現。転倒などはフェーズ2)
       if (simTime < QUAKE_DURATION) {
@@ -148,11 +179,13 @@ renderer.setAnimationLoop(() => {
 
 // 開発用(動作確認のためコンソールから操作できるように)
 window.__sim = {
-  camera, terrain, town, player, scene, tsunami,
+  camera, terrain, town, player, scene, tsunami, renderer,
   get simTime() { return simTime; },
   set simTime(v) { simTime = v; },
   get timeScale() { return timeScale; },
   set timeScale(v) { timeScale = v; },
   get running() { return running; },
   set running(v) { running = v; },
+  get caught() { return caught; },
+  set caught(v) { caught = v; },
 };

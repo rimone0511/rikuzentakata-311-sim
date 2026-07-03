@@ -4,8 +4,11 @@
     {
       "name": "sim",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8000"],
-      "port": 8000
+      "runtimeArgs": [
+        "-c",
+        "import os, sys, runpy; sys.argv = ['http.server', os.environ.get('PORT', '8000')]; runpy.run_module('http.server', run_name='__main__')"
+      ],
+      "autoPort": true
     }
   ]
 }
