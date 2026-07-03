@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createLandmarkModel } from './landmarks3d.js';
 
 // 道路網の描画と、道路沿いへの簡易建物(箱)の手続き生成。
 // 建物は震災前の実配置データではなく骨格表現(フェーズ2で改善)。
@@ -34,8 +35,8 @@ export class Town {
 
   static async build(terrain, baseUrl = './assets') {
     const town = new Town(terrain);
-    const roadsData = await (await fetch(`${baseUrl}/roads.json`)).json();
-    const manual = await (await fetch(`${baseUrl}/landmarks_manual.json`)).json();
+    const roadsData = await (await fetch(`${baseUrl}/roads.json`, { cache: 'no-cache' })).json();
+    const manual = await (await fetch(`${baseUrl}/landmarks_manual.json`, { cache: 'no-cache' })).json();
     town.#buildRoads(roadsData.roads);
     town.#buildHouses(roadsData.roads);
     town.#buildLandmarks(manual.landmarks);
@@ -183,19 +184,25 @@ export class Town {
     this.count = placed.length;
   }
 
-  // ---- ランドマーク(色付きの箱+ラベル) ----
+  // ---- ランドマーク(個別3Dモデル+ラベル。モデル未定義なら箱) ----
   #buildLandmarks(landmarks) {
     const t = this.terrain;
     this.landmarks = [];
     for (const lm of landmarks) {
       const p = t.latLonToWorld(lm.lat, lm.lon);
       const y = t.heightAt(p.x, p.z);
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(lm.w, lm.h, lm.d),
-        new THREE.MeshLambertMaterial({ color: parseInt(lm.color, 16) })
-      );
-      mesh.position.set(p.x, y + lm.h / 2, p.z);
-      this.group.add(mesh);
+      const model = createLandmarkModel(lm.key);
+      if (model) {
+        model.position.set(p.x, y, p.z);
+        this.group.add(model);
+      } else {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(lm.w, lm.h, lm.d),
+          new THREE.MeshLambertMaterial({ color: parseInt(lm.color, 16) })
+        );
+        mesh.position.set(p.x, y + lm.h / 2, p.z);
+        this.group.add(mesh);
+      }
       this.group.add(makeLabel(lm.name, p.x, y + lm.h + 12, p.z));
       this.colliders.push({ x: p.x, z: p.z, rot: 0, hw: lm.w / 2, hd: lm.d / 2, top: y + lm.h });
       this.landmarks.push({ ...lm, x: p.x, z: p.z, y });
