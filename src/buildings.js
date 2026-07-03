@@ -202,17 +202,17 @@ export class Town {
     }
   }
 
-  // プレイヤー(半径r の円)と建物の衝突。押し戻しベクトルを返す
+  // プレイヤー(半径r の円)と建物の衝突。めり込みを押し戻した座標を返す
   resolveCollision(x, z, r) {
     let px = x, pz = z;
-    const cx = Math.floor(x / 20), cz = Math.floor(z / 20);
     for (const c of this.colliders) {
       // 粗い距離チェック
       if (Math.abs(c.x - px) > c.hw + c.hd + r + 2 || Math.abs(c.z - pz) > c.hw + c.hd + r + 2) continue;
-      // 建物ローカル座標へ回転
-      const cos = Math.cos(-c.rot), sin = Math.sin(-c.rot);
-      const lx = (px - c.x) * cos - (pz - c.z) * sin;
-      const lz = (px - c.x) * sin + (pz - c.z) * cos;
+      // 建物ローカル座標へ(Y軸回転 rot の逆変換)
+      const cos = Math.cos(c.rot), sin = Math.sin(c.rot);
+      const dx = px - c.x, dz = pz - c.z;
+      const lx = dx * cos - dz * sin;
+      const lz = dx * sin + dz * cos;
       const ox = c.hw + r - Math.abs(lx);
       const oz = c.hd + r - Math.abs(lz);
       if (ox > 0 && oz > 0) {
@@ -220,9 +220,9 @@ export class Town {
         let mx = 0, mz = 0;
         if (ox < oz) mx = ox * Math.sign(lx || 1);
         else mz = oz * Math.sign(lz || 1);
-        const wc = Math.cos(c.rot), ws = Math.sin(c.rot);
-        px += mx * wc - mz * ws;
-        pz += mx * ws + mz * wc;
+        // ローカル → ワールド(Y軸回転 rot)
+        px += mx * cos + mz * sin;
+        pz += -mx * sin + mz * cos;
       }
     }
     return { x: px, z: pz };
