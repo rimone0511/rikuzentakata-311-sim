@@ -12,7 +12,8 @@
 ## ディレクトリ
 
 - `index.html` — エントリ。importmap と HUD の DOM
-- `src/` — ES modules(main.js / terrain.js / buildings.js / player.js / tsunami.js / hud.js)
+- `src/` — ES modules(main.js / terrain.js / buildings.js / landmarks3d.js / player.js / tsunami.js / npc.js / audio.js)。
+  各モジュールの責務・データの流れ・壊しやすい箇所は ARCHITECTURE.md を参照(変更前に読む)
 - `assets/` — 前処理済みデータ(地形バイナリ、道路 JSON など)。git 管理する
 - `tools/` — Python のデータ取得・前処理スクリプト。生成物は assets/ に出力
 - `tools/cache/` — ダウンロードした生タイル等のキャッシュ(git 管理外)
